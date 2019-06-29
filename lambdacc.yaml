@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Deploy the lambda function using cloudformation template
+Parameters:
+
+  BucketName:
+    Type: String
+    Description: The name of the bucket.
+  OutputFile:
+    Type: String
+    Description: The name of the Outputfile.
+  SmsNotification:
+    Type: String
+    Description: Send the notification  
+
+Resources:
+
+  Lambdafunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: SamhithaTestLambda
+      Handler: lambda_function
+      Role: !ImportValue IAMPolicies
+
+      Code:
+        S3Bucket: poreddy-pipeline
+        S3Key: LambdaCode
+      Runtime: go1.x
+      Timeout: 60
+      Environment:
+        Variables:
+          BucketName: !Ref BucketName
+          OutputFile: !Ref OutputFile
+          SSM_SFTP_NWI: !Ref SmsNotification 
+      
+  ScheduledRule: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: ScheduledRule
+      ScheduleExpression: rate(10 minutes)
+      State: ENABLED
+      Targets: 
+        - Arn: !GetAtt 
+            - Lambdafunction
+            - Arn
+          Id: TargetFunctionV1
+ 
+  PermissionForEventsToInvokeLambda: 
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: 
+        Ref: Lambdafunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: 
+        Fn::GetAtt: 
+         - ScheduledRule
+         - Arn
+                          
+
+
+
+
+     

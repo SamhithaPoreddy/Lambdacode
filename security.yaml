@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Deploy the lambda function using cloudformation template
+
+Resources:
+
+      LambdaRole:
+        Type: AWS::IAM::Role
+        Properties:
+          RoleName:  sam-role
+          AssumeRolePolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Principal:
+                  Service:
+                    - lambda.amazonaws.com
+                Action:
+                  - sts:AssumeRole
+          ManagedPolicyArns:
+            - arn:aws:iam::aws:policy/AWSLambdaExecute  
+
+            - arn:aws:iam::aws:policy/AmazonS3FullAccess
+            - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+            - arn:aws:iam::aws:policy/AWSLambdaFullAccess
+            
+            - arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess
+            - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+        
+            - arn:aws:iam::aws:policy/AWSStepFunctionsFullAccess                    
+
+
+          Policies:
+            - PolicyName: AmazonDMSRedshiftS3Role
+              PolicyDocument:
+                  Version: 2012-10-17
+                  Statement:
+                    - Effect: Allow
+                      Action:
+                        - s3:CreateBucket
+                        - s3:ListBucket
+                        - s3:DeleteBucket
+                        - s3:GetBucketLocation
+                        - s3:GetObject
+                        - s3:PutObject
+                        - s3:DeleteObject
+                        - s3:GetObjectVersion
+                        - s3:GetBucketPolicy
+                        - s3:PutBucketPolicy
+                        - s3:GetBucketAcl
+                        - s3:DeleteBucketPolicy
+                      Resource: arn:aws:s3:::dms-*  
+            - PolicyName: AWSLambdaVPCAccessExecutionRole
+              PolicyDocument:
+                  Version: 2012-10-17
+                  Statement:
+                    - Effect: Allow
+                      Action: 
+                        - logs:CreateLogGroup
+                        - logs:CreateLogStream
+                        - logs:PutLogEvents
+                        - ec2:CreateNetworkInterface
+                        - ec2:DescribeNetworkInterfaces     
+                        - ec2:DeleteNetworkInterface      
+                      Resource: "*"    
+            - PolicyName: Vivek_SES_send_e-mail
+              PolicyDocument:
+                  Version: 2012-10-17
+                  Statement:
+                    - Effect: Allow
+                      Action: 
+                        - ses:SendEmail
+                        - ses:SendRawEmail
+                      Resource: "*"  
+            - PolicyName: LambdaBasicExecutionRole
+              PolicyDocument:
+                  Version: '2012-10-17'
+                  Statement:
+                  - Effect: Allow
+                    Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                    Resource: "*"      
+            - PolicyName: AWSLambdaExecute
+              PolicyDocument:
+                  Version: '2012-10-17'
+                  Statement:
+                  - Effect: Allow
+                    Action:
+                    - logs:*
+                    Resource: arn:aws:logs:*:*:*
+                  - Effect: Allow
+                    Action:
+                    - s3:GetObject
+                    - s3:PutObject
+                    Resource: arn:aws:s3:::*      
+            - PolicyName: AmazonS3FullAccess
+              PolicyDocument:
+                  Version: '2012-10-17'
+                  Statement:
+                  - Effect: Allow
+                    Action: s3:*
+                    Resource: "*"        
+
+
+Outputs:
+  Security:
+    Description: The security of the VPC
+    Value: 
+      Fn::GetAtt: 
+        - LambdaRole
+        - Arn   
+    Export:
+      Name: IAMPolicies                                                                
+
+
